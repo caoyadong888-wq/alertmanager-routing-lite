@@ -1,0 +1,8 @@
+{{ define "pack.slack.title" }}[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}{{ end }}
+
+{{ define "pack.slack.text" }}{{ range .Alerts }}- {{ .Labels.alertname }} {{ .Labels.instance }} {{ .Annotations.summary }}
+{{ end }}{{ end }}
+
+{{ define "pack.slack.color" }}{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}{{ end }}
+
+{{ define "pack.pager.description" }}[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} {{ .CommonAnnotations.summary }}{{ end }}

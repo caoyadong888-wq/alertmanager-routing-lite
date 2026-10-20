@@ -1,0 +1,7 @@
+# Severity-only expectations for deliverables/alertmanager-severity.yml.
+# The full pack's route_tree.py checks a larger file. These four rows are the lite tree.
+
+deliverables/alertmanager-severity.yml severity=critical pager-oncall
+deliverables/alertmanager-severity.yml severity=warning slack-oncall
+deliverables/alertmanager-severity.yml severity=info email-info
+deliverables/alertmanager-severity.yml - email-catchall

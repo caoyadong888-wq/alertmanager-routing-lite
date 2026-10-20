@@ -1,0 +1,73 @@
+# Severity-only tree from the full pack: no team split.
+# critical -> PagerDuty placeholder, warning -> Slack placeholder, info -> email.
+# routing_key is the placeholder REPLACE_ME. Slack api_url is an example.com placeholder.
+# Template path is relative to this deliverables/ directory. Check upstream docs.
+
+global:
+  resolve_timeout: 5m
+  smtp_from: 'alertmanager@example.com'
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_require_tls: true
+
+templates:
+  - 'templates/slack_pager.tmpl'
+
+route:
+  receiver: email-catchall
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - 'severity="critical"'
+      receiver: pager-oncall
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+    - matchers:
+        - 'severity="warning"'
+      receiver: slack-oncall
+    - matchers:
+        - 'severity="info"'
+      receiver: email-info
+      mute_time_intervals:
+        - weekends
+
+inhibit_rules:
+  - name: critical-inhibits-warning-and-info
+    source_matchers:
+      - 'severity="critical"'
+    target_matchers:
+      - 'severity=~"warning|info"'
+    equal: ['alertname', 'cluster', 'service']
+
+time_intervals:
+  - name: weekends
+    time_intervals:
+      - weekdays: ['saturday', 'sunday']
+        location: 'UTC'
+
+receivers:
+  - name: email-catchall
+    email_configs:
+      - to: 'oncall@example.com'
+        send_resolved: true
+  - name: email-info
+    email_configs:
+      - to: 'reports@example.com'
+        send_resolved: false
+  - name: slack-oncall
+    slack_configs:
+      - channel: '#alerts'
+        send_resolved: true
+        api_url: 'https://example.com/hooks/slack-oncall'
+        title: '{{ template "pack.slack.title" . }}'
+        text: '{{ template "pack.slack.text" . }}'
+        color: '{{ template "pack.slack.color" . }}'
+  - name: pager-oncall
+    pagerduty_configs:
+      - routing_key: 'REPLACE_ME'
+        send_resolved: true
+        severity: 'critical'
+        description: '{{ template "pack.pager.description" . }}'
